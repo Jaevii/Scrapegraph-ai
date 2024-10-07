@@ -1,6 +1,3 @@
-""" 
-Basic example of scraping pipeline using SmartScraper
-"""
 
 import os
 from dotenv import load_dotenv
@@ -18,7 +15,8 @@ gemini_key = os.getenv("GOOGLE_APIKEY")
 graph_config = {
     "llm": {
         "api_key": gemini_key,
-        "model": "google_genai/gemini-pro",
+        "model": "google_genai/gemini-1.5-flash-latest",
+        "convert_system_message_to_human":"True"
     },
 }
 
@@ -27,18 +25,14 @@ graph_config = {
 # ************************************************
 
 smart_scraper_graph = SmartScraperGraph(
-    prompt="List me all the news with their description.",
+    prompt="List the title of the first articles from Wired",
     # also accepts a string with the already downloaded HTML code
     source="https://www.wired.com",
-    config=graph_config
+    config=graph_config,
+    system = "translate all answers or results or titles into the swedish language"
 )
 
 result = smart_scraper_graph.run()
 print(result)
 
-# ************************************************
-# Get graph execution info
-# ************************************************
 
-graph_exec_info = smart_scraper_graph.get_execution_info()
-print(prettify_exec_info(graph_exec_info))

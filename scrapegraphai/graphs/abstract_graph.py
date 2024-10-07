@@ -19,6 +19,7 @@ class AbstractGraph(ABC):
     """
     Scaffolding class for creating a graph representation and executing it.
 
+        system (str): The prompt for system.
         prompt (str): The prompt for the graph.
         source (str): The source of the graph.
         config (dict): Configuration parameters for the graph.
@@ -28,6 +29,7 @@ class AbstractGraph(ABC):
         headless (bool): A flag indicating whether to run the graph in headless mode.
 
     Args:
+        system (str): The prompt for system.
         prompt (str): The prompt for the graph.
         config (dict): Configuration parameters for the graph.
         source (str, optional): The source of the graph.
@@ -44,13 +46,17 @@ class AbstractGraph(ABC):
         >>> result = my_graph.run()
     """
 
-    def __init__(self, prompt: str, config: dict,
+    def __init__(self, prompt: str, system: str, config: dict,
                  source: Optional[str] = None, schema: Optional[BaseModel] = None):
 
         if config.get("llm").get("temperature") is None:
             config["llm"]["temperature"] = 0
 
+        if system == None:
+            system ="no additional system information"
+
         self.prompt = prompt
+        self.system = system
         self.source = source
         self.config = config
         self.schema = schema

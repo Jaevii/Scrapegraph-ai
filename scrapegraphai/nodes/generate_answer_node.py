@@ -1,4 +1,6 @@
 from typing import List, Optional
+from langchain_core.messages import HumanMessage, SystemMessage
+
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.runnables import RunnableParallel
@@ -40,6 +42,7 @@ class GenerateAnswerNode(BaseNode):
         input_keys = self.get_input_keys(state)
         input_data = [state[key] for key in input_keys]
         user_prompt = input_data[0]
+        system_prompt = input_data[2]
         doc = input_data[1]
 
         if self.node_config.get("schema", None) is not None:
@@ -90,7 +93,10 @@ class GenerateAnswerNode(BaseNode):
             chain = prompt | self.llm_model
             if output_parser:
                 chain = chain | output_parser
-            answer = chain.invoke({"question": user_prompt})
+            
+            context_message = SystemMessage(content=f"{system_prompt}")
+            human_message = HumanMessage(content=f"question: {user_prompt}")
+            answer = chain.invoke([context_message, human_message])
 
             state.update({self.output[0]: answer})
             return state
@@ -106,20 +112,29 @@ class GenerateAnswerNode(BaseNode):
             chains_dict[chain_name] = prompt | self.llm_model
             if output_parser:
                 chains_dict[chain_name] = chains_dict[chain_name] | output_parser
-
+                
+        context_message = SystemMessage(content=f"{system_prompt}")
+        human_message = HumanMessage(content=f"question: {user_prompt}")
         async_runner = RunnableParallel(**chains_dict)
-        batch_results = async_runner.invoke({"question": user_prompt})
+        batch_results = async_runner.invoke([context_message, human_message])
 
         merge_prompt = PromptTemplate(
             template=template_merge_prompt,
             input_variables=["context", "question"],
-            partial_variables={"format_instructions": format_instructions}
+            partial_variables={"format_instructions": format_instructions},
+            
+
         )
 
         merge_chain = merge_prompt | self.llm_model
         if output_parser:
             merge_chain = merge_chain | output_parser
-        answer = merge_chain.invoke({"context": batch_results, "question": user_prompt})
+        
+        
+        human_message2 = HumanMessage(content=f"Context: {batch_results}\nQuestion: {user_prompt}")
+        print(human_message)
+        answer = merge_chain.invoke([context_message, human_message2])
+
 
         state.update({self.output[0]: answer})
         return state

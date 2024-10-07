@@ -19,6 +19,7 @@ class SmartScraperGraph(AbstractGraph):
     using a natural language model to interpret and answer prompts.
 
     Attributes:
+        system (str): The prompt for system instruction.
         prompt (str): The prompt for the graph.
         source (str): The source of the graph.
         config (dict): Configuration parameters for the graph.
@@ -30,6 +31,7 @@ class SmartScraperGraph(AbstractGraph):
         headless (bool): A flag indicating whether to run the graph in headless mode.
 
     Args:
+        system (str): The prompt for system instruction.
         prompt (str): The prompt for the graph.
         source (str): The source of the graph.
         config (dict): Configuration parameters for the graph.
@@ -45,8 +47,8 @@ class SmartScraperGraph(AbstractGraph):
         )
     """
 
-    def __init__(self, prompt: str, source: str, config: dict, schema: Optional[BaseModel] = None):
-        super().__init__(prompt, config, source, schema)
+    def __init__(self, prompt: str, source: str, config: dict, schema: Optional[BaseModel] = None,system: Optional[str] = None):
+        super().__init__(prompt,system, config, source, schema)
 
         self.input_key = "url" if source.startswith("http") else "local_dir"
 
@@ -80,7 +82,7 @@ class SmartScraperGraph(AbstractGraph):
         )
 
         generate_answer_node = GenerateAnswerNode(
-            input="user_prompt & (relevant_chunks | parsed_doc | doc)",
+            input="user_prompt & (relevant_chunks | parsed_doc | doc) & system_prompt",
             output=["answer"],
             node_config={
                 "llm_model": self.llm_model,
@@ -111,7 +113,7 @@ class SmartScraperGraph(AbstractGraph):
             str: The answer to the prompt.
         """
 
-        inputs = {"user_prompt": self.prompt, self.input_key: self.source}
+        inputs = {"user_prompt": self.prompt, self.input_key: self.source,"system_prompt":self.system}
         self.final_state, self.execution_info = self.graph.execute(inputs)
 
         return self.final_state.get("answer", "No answer found.")
