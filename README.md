@@ -77,6 +77,8 @@ There are multiple standard scraping pipelines that can be used to extract infor
 
 The most common one is the `SmartScraperGraph`, which extracts information from a single page given a user prompt and a source URL.
 
+Where `system` prompt could be left out of if sytem instruction is not necessary.
+
 
 ```python
 import json
@@ -85,18 +87,18 @@ from scrapegraphai.graphs import SmartScraperGraph
 # Define the configuration for the scraping pipeline
 graph_config = {
     "llm": {
-        "api_key": "YOUR_OPENAI_APIKEY",
-        "model": "openai/gpt-4o-mini",
+        "api_key": gemini_key,
+        "model": "google_genai/gemini-1.5-flash-latest",
+        "convert_system_message_to_human":"True"
     },
-    "verbose": True,
-    "headless": False,
 }
 
 # Create the SmartScraperGraph instance
 smart_scraper_graph = SmartScraperGraph(
     prompt="Find some information about what does the company do, the name and a contact email.",
     source="https://scrapegraphai.com/",
-    config=graph_config
+    config=graph_config,
+    system = "translate all answers or results or titles into the swedish language"
 )
 
 # Run the pipeline
